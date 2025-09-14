@@ -1,0 +1,45 @@
+{
+  "name": "ptashka-shop",
+  "version": "1.0.0",
+  "description": "Сучасний інтернет-магазин з акцентом на UX та швидкість",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\"",
+    "start:frontend": "cd frontend && npm start",
+    "start:backend": "cd backend && npm start",
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "cd frontend && npm test",
+    "test:backend": "cd backend && npm test",
+    "test:e2e": "playwright test",
+    "test:all": "npm run test && npm run test:e2e",
+    "lint": "npm run lint:frontend && npm run lint:backend",
+    "lint:frontend": "cd frontend && npm run lint",
+    "lint:backend": "cd backend && npm run lint",
+    "migrate": "cd backend && npm run migrate",
+    "seed": "cd backend && npm run seed"
+  },
+  "keywords": [
+    "e-commerce",
+    "online-shop",
+    "react",
+    "nextjs",
+    "nodejs",
+    "typescript"
+  ],
+  "author": "Ptashka.shop Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "concurrently": "^8.2.2"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ]
+}

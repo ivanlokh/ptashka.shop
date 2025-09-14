@@ -1,0 +1,325 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String?
+  lastName  String?
+  phone     String?
+  avatar    String?
+  role      UserRole @default(CUSTOMER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  addresses    Address[]
+  orders       Order[]
+  reviews      Review[]
+  cartItems    CartItem[]
+  wishlist     WishlistItem[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model Address {
+  id          String  @id @default(cuid())
+  userId      String
+  type        AddressType @default(SHIPPING)
+  firstName   String
+  lastName    String
+  company     String?
+  address1    String
+  address2    String?
+  city        String
+  state       String?
+  postalCode  String
+  country     String
+  phone       String?
+  isDefault   Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders      Order[]
+
+  @@map("addresses")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  image       String?
+  parentId    String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  products    Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  shortDescription String?
+  sku         String   @unique
+  price       Decimal  @db.Decimal(10, 2)
+  comparePrice Decimal? @db.Decimal(10, 2)
+  costPrice   Decimal? @db.Decimal(10, 2)
+  stock       Int      @default(0)
+  trackStock  Boolean  @default(true)
+  weight      Decimal? @db.Decimal(8, 2)
+  dimensions  Json?    // {length, width, height}
+  isActive    Boolean  @default(true)
+  isDigital   Boolean  @default(false)
+  isFeatured  Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  metaTitle   String?
+  metaDescription String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  categoryId  String
+  category    Category   @relation(fields: [categoryId], references: [id])
+  images      ProductImage[]
+  variants    ProductVariant[]
+  attributes  ProductAttribute[]
+  reviews     Review[]
+  cartItems   CartItem[]
+  wishlist    WishlistItem[]
+  orderItems  OrderItem[]
+
+  @@map("products")
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  url       String
+  alt       String?
+  sortOrder Int     @default(0)
+  isPrimary Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+}
+
+model ProductVariant {
+  id        String  @id @default(cuid())
+  productId String
+  name      String
+  sku       String  @unique
+  price     Decimal @db.Decimal(10, 2)
+  stock     Int     @default(0)
+  isActive  Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_variants")
+}
+
+model ProductAttribute {
+  id        String  @id @default(cuid())
+  productId String
+  name      String
+  value     String
+  createdAt DateTime @default(now())
+
+  // Relations
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_attributes")
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  orderNumber String      @unique
+  userId      String
+  status      OrderStatus @default(PENDING)
+  subtotal    Decimal     @db.Decimal(10, 2)
+  tax         Decimal     @db.Decimal(10, 2) @default(0)
+  shipping    Decimal     @db.Decimal(10, 2) @default(0)
+  discount    Decimal     @db.Decimal(10, 2) @default(0)
+  total       Decimal     @db.Decimal(10, 2)
+  currency    String      @default("UAH")
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  user        User        @relation(fields: [userId], references: [id])
+  addressId   String
+  address     Address     @relation(fields: [addressId], references: [id])
+  items       OrderItem[]
+  payments    Payment[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Decimal @db.Decimal(10, 2)
+  total     Decimal @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+
+  // Relations
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  orderId       String
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  amount        Decimal       @db.Decimal(10, 2)
+  currency      String        @default("UAH")
+  transactionId String?
+  gatewayResponse Json?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  order         Order         @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  rating    Int      // 1-5
+  title     String?
+  comment   String?
+  isVerified Boolean @default(false)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@map("reviews")
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("cart_items")
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("wishlist_items")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  CUSTOMER
+  MODERATOR
+}
+
+enum AddressType {
+  SHIPPING
+  BILLING
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  BANK_TRANSFER
+  STRIPE
+  PAYPAL
+  APPLE_PAY
+  GOOGLE_PAY
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
