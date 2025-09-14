@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { asyncHandler } from '../middleware/errorHandler'
 import { protect, authorize } from '../middleware/auth'
+import { cache, invalidateCacheByTags } from '../middleware/cache'
 import {
   getProducts,
   getProductById,
@@ -17,7 +18,7 @@ const router = Router()
 // @desc    Get all products
 // @route   GET /api/products
 // @access  Public
-router.get('/', asyncHandler(async (req: Request, res: Response) => {
+router.get('/', cache({ ttl: 300 }), asyncHandler(async (req: Request, res: Response) => {
   const filters = {
     search: req.query.search as string,
     categoryId: req.query.categoryId as string,
@@ -44,7 +45,7 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
 // @desc    Get featured products
 // @route   GET /api/products/featured
 // @access  Public
-router.get('/featured', asyncHandler(async (req: Request, res: Response) => {
+router.get('/featured', cache({ ttl: 600 }), asyncHandler(async (req: Request, res: Response) => {
   const limit = req.query.limit ? Number(req.query.limit) : 8
   const products = await getFeaturedProducts(limit)
 
@@ -99,6 +100,9 @@ router.get('/:identifier', asyncHandler(async (req: Request, res: Response) => {
 // @access  Private/Admin
 router.post('/', protect, authorize('ADMIN'), asyncHandler(async (req: Request, res: Response) => {
   const product = await createProduct(req.body)
+  
+  // Invalidate product cache
+  await invalidateCacheByTags(['products', 'featured'])
 
   res.status(201).json({
     success: true,

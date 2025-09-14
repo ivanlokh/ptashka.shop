@@ -2,6 +2,99 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom Components */
+@layer components {
+  /* Container */
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Section Padding */
+  .section-padding {
+    @apply py-16 sm:py-20 lg:py-24;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors;
+  }
+
+  .btn-primary.btn-sm {
+    @apply px-3 py-1.5 text-sm;
+  }
+
+  .btn-primary.btn-lg {
+    @apply px-6 py-3 text-lg;
+  }
+
+  .btn-outline {
+    @apply border border-primary-600 text-primary-600 px-4 py-2 rounded-lg font-medium hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors;
+  }
+
+  .btn-outline.btn-sm {
+    @apply px-3 py-1.5 text-sm;
+  }
+
+  .btn-outline.btn-lg {
+    @apply px-6 py-3 text-lg;
+  }
+
+  /* Search Input */
+  .search-input {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-base;
+  }
+
+  /* Product Grid */
+  .product-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6;
+  }
+
+  /* Product Card */
+  .product-card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1;
+  }
+
+  .product-card-image {
+    @apply w-full aspect-square object-cover transition-transform duration-300 group-hover:scale-105;
+  }
+
+  .product-card-content {
+    @apply p-4;
+  }
+
+  .product-card-title {
+    @apply font-medium text-gray-900 mb-2 line-clamp-2;
+  }
+
+  .product-card-price {
+    @apply text-lg font-bold text-gray-900;
+  }
+
+  .product-card-price-old {
+    @apply text-sm text-gray-500 line-through;
+  }
+
+  /* Text Gradient */
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent;
+  }
+
+  /* Line Clamp */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;

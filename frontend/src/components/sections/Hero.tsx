@@ -2,14 +2,20 @@
 
 import { useState } from 'react'
 import { Search, ShoppingBag, Star, Truck, Shield, RefreshCw } from 'lucide-react'
+import { useApp } from '@/contexts/AppContext'
+import { useRouter } from 'next/navigation'
 
 export default function Hero() {
-  const [searchQuery, setSearchQuery] = useState('')
+  const { state, actions } = useApp()
+  const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState(state.searchQuery)
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Implement search functionality
-    console.log('Searching for:', searchQuery)
+    if (searchQuery.trim()) {
+      actions.setSearchQuery(searchQuery)
+      router.push(`/products?search=${encodeURIComponent(searchQuery)}`)
+    }
   }
 
   return (

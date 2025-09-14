@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { Inter, Poppins } from 'next/font/google'
 import './globals.css'
 import StripeProvider from '@/components/providers/StripeProvider'
+import { AppProvider } from '@/contexts/AppContext'
+import Header from '@/components/layout/Header'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -35,11 +37,16 @@ export default function RootLayout({
   return (
     <html lang="uk" className={`${inter.variable} ${poppins.variable}`}>
       <body className="font-sans antialiased">
-        <StripeProvider>
-          <div id="root">
-            {children}
-          </div>
-        </StripeProvider>
+        <AppProvider>
+          <StripeProvider>
+            <div id="root">
+              <Header />
+              <main>
+                {children}
+              </main>
+            </div>
+          </StripeProvider>
+        </AppProvider>
       </body>
     </html>
   )

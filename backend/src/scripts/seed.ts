@@ -55,15 +55,17 @@ async function main() {
       name: 'MacBook Pro 16"',
       description: 'Powerful laptop for professionals',
       sku: 'MBP16-001',
-      price: 2499.99,
+      price: 45999,
+      comparePrice: 49999,
       stock: 10,
       categoryId: 'electronics',
       isActive: true,
+      isFeatured: true,
       slug: 'macbook-pro-16',
       images: {
         create: [
           {
-            url: 'https://via.placeholder.com/400x300?text=MacBook+Pro',
+            url: 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=400&h=300&fit=crop',
             alt: 'MacBook Pro 16 inch',
             isPrimary: true,
             sortOrder: 0,
@@ -81,15 +83,17 @@ async function main() {
       name: 'iPhone 15 Pro',
       description: 'Latest iPhone with advanced features',
       sku: 'IP15P-001',
-      price: 999.99,
+      price: 45999,
+      comparePrice: 49999,
       stock: 25,
       categoryId: 'electronics',
       isActive: true,
+      isFeatured: true,
       slug: 'iphone-15-pro',
       images: {
         create: [
           {
-            url: 'https://via.placeholder.com/400x300?text=iPhone+15+Pro',
+            url: 'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400&h=300&fit=crop',
             alt: 'iPhone 15 Pro',
             isPrimary: true,
             sortOrder: 0,
@@ -151,7 +155,64 @@ async function main() {
     },
   });
 
-  const products = [laptop, phone, shirt, chair];
+  // Create additional featured products
+  const airpods = await prisma.product.upsert({
+    where: { id: 'airpods-1' },
+    update: {},
+    create: {
+      id: 'airpods-1',
+      name: 'AirPods Pro 2',
+      description: 'Premium wireless earbuds with active noise cancellation',
+      sku: 'APP2-001',
+      price: 8999,
+      comparePrice: 9999,
+      stock: 50,
+      categoryId: 'electronics',
+      isActive: true,
+      isFeatured: true,
+      slug: 'airpods-pro-2',
+      images: {
+        create: [
+          {
+            url: 'https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=400&h=300&fit=crop',
+            alt: 'AirPods Pro 2',
+            isPrimary: true,
+            sortOrder: 0,
+          },
+        ],
+      },
+    },
+  });
+
+  const samsung = await prisma.product.upsert({
+    where: { id: 'samsung-1' },
+    update: {},
+    create: {
+      id: 'samsung-1',
+      name: 'Samsung Galaxy S24 Ultra',
+      description: 'Premium Android smartphone with S Pen',
+      sku: 'SGS24U-001',
+      price: 38999,
+      comparePrice: 42999,
+      stock: 15,
+      categoryId: 'electronics',
+      isActive: true,
+      isFeatured: true,
+      slug: 'samsung-galaxy-s24-ultra',
+      images: {
+        create: [
+          {
+            url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&h=300&fit=crop',
+            alt: 'Samsung Galaxy S24 Ultra',
+            isPrimary: true,
+            sortOrder: 0,
+          },
+        ],
+      },
+    },
+  });
+
+  const products = [laptop, phone, shirt, chair, airpods, samsung];
 
   console.log('✅ Products created:', products.length);
 

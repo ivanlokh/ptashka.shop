@@ -22,6 +22,16 @@ import placeholderRoutes from './routes/placeholder'
 // Import middleware
 import { errorHandler } from './middleware/errorHandler'
 import { notFound } from './middleware/notFound'
+import { 
+  securityHeaders, 
+  requestLogger, 
+  corsOptions, 
+  apiLimiter,
+  sanitizeInput,
+  requestSizeLimit,
+  sqlInjectionProtection 
+} from './middleware/security'
+import { cache } from './middleware/cache'
 
 const app = express()
 const PORT = process.env.API_PORT || 3001
@@ -29,22 +39,16 @@ const PORT = process.env.API_PORT || 3001
 // Initialize Prisma
 export const prisma = new PrismaClient()
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
-})
-
 // Middleware
-app.use(helmet())
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true,
-}))
+app.use(securityHeaders)
+app.use(requestLogger)
+app.use(cors(corsOptions))
 app.use(compression())
 app.use(morgan('combined'))
-app.use(limiter)
+app.use(apiLimiter)
+app.use(requestSizeLimit)
+app.use(sanitizeInput)
+app.use(sqlInjectionProtection)
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 
@@ -65,6 +69,47 @@ app.use('/api/orders', orderRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/payment', paymentRoutes)
 app.use('/api/placeholder', placeholderRoutes)
+
+// Cart routes (temporary mock)
+app.get('/api/cart', (req, res) => {
+  res.json({
+    success: true,
+    data: [],
+    message: 'Cart retrieved successfully'
+  })
+})
+
+app.post('/api/cart', (req, res) => {
+  res.json({
+    success: true,
+    data: { id: '1', productId: req.body.productId, quantity: req.body.quantity },
+    message: 'Item added to cart successfully'
+  })
+})
+
+app.put('/api/cart/:id', (req, res) => {
+  res.json({
+    success: true,
+    data: { id: req.params.id, quantity: req.body.quantity },
+    message: 'Cart item updated successfully'
+  })
+})
+
+app.delete('/api/cart/:id', (req, res) => {
+  res.json({
+    success: true,
+    data: null,
+    message: 'Cart item removed successfully'
+  })
+})
+
+app.delete('/api/cart/clear', (req, res) => {
+  res.json({
+    success: true,
+    data: null,
+    message: 'Cart cleared successfully'
+  })
+})
 
 console.log('All routes registered successfully');
 console.log('Placeholder routes:', placeholderRoutes);
