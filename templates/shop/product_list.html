@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Каталог товарів - Ptashka.shop{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Sidebar with filters -->
+        <div class="col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Фільтри</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" id="product-filters">
+                        <div class="mb-3">
+                            <label for="search" class="form-label">Пошук</label>
+                            <input type="text" class="form-control" id="search" name="q" 
+                                   value="{{ request.GET.q }}" placeholder="Назва товару...">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Категорія</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="">Всі категорії</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ cat.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="brand" class="form-label">Бренд</label>
+                            <select class="form-select" id="brand" name="brand">
+                                <option value="">Всі бренди</option>
+                                {% for brand in brands %}
+                                <option value="{{ brand.id }}" {% if request.GET.brand == brand.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ brand.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="min_price" class="form-label">Мінімальна ціна</label>
+                            <input type="number" class="form-control" id="min_price" name="min_price" 
+                                   value="{{ request.GET.min_price }}" placeholder="0">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="max_price" class="form-label">Максимальна ціна</label>
+                            <input type="number" class="form-control" id="max_price" name="max_price" 
+                                   value="{{ request.GET.max_price }}" placeholder="10000">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="sort" class="form-label">Сортування</label>
+                            <select class="form-select" id="sort" name="sort">
+                                <option value="">За замовчуванням</option>
+                                <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Новинки</option>
+                                <option value="price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Ціна: від низької до високої</option>
+                                <option value="price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Ціна: від високої до низької</option>
+                                <option value="name" {% if request.GET.sort == 'name' %}selected{% endif %}>Назва</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">Застосувати фільтри</button>
+                        <a href="{% url 'shop:product_list' %}" class="btn btn-outline-secondary w-100 mt-2">Очистити</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Products grid -->
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Каталог товарів</h2>
+                <div class="d-flex align-items-center">
+                    <span class="text-muted me-3">Знайдено {{ products|length }} товарів</span>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-secondary active" data-view="grid">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" data-view="list">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            {% if products %}
+            <div class="row" id="products-grid">
+                {% for product in products %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100 product-card">
+                        <div class="position-relative">
+                            {% if product.primary_image %}
+                            <img src="{{ product.primary_image.image.url }}" alt="{{ product.name }}" 
+                                 class="card-img-top" style="height: 200px; object-fit: cover;">
+                            {% else %}
+                            <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="fas fa-image text-muted fa-3x"></i>
+                            </div>
+                            {% endif %}
+                            
+                            {% if product.discount_percentage > 0 %}
+                            <span class="badge bg-danger position-absolute top-0 start-0 m-2">
+                                -{{ product.discount_percentage }}%
+                            </span>
+                            {% endif %}
+                            
+                            <div class="position-absolute top-0 end-0 m-2">
+                                <button class="btn btn-sm btn-light rounded-circle" 
+                                        data-action="toggle-wishlist" 
+                                        data-product-id="{{ product.id }}"
+                                        title="Додати до бажаних">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title">
+                                <a href="{% url 'shop:product_detail' product.slug %}" 
+                                   class="text-decoration-none text-dark">
+                                    {{ product.name|truncatechars:50 }}
+                                </a>
+                            </h6>
+                            
+                            <p class="card-text text-muted small">
+                                {{ product.short_description|truncatechars:80 }}
+                            </p>
+                            
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <span class="h5 text-primary mb-0">{{ product.price }} ₴</span>
+                                        {% if product.compare_price %}
+                                        <small class="text-muted text-decoration-line-through ms-2">{{ product.compare_price }} ₴</small>
+                                        {% endif %}
+                                    </div>
+                                    {% if product.is_in_stock %}
+                                    <small class="text-success">
+                                        <i class="fas fa-check-circle me-1"></i>В наявності
+                                    </small>
+                                    {% else %}
+                                    <small class="text-danger">
+                                        <i class="fas fa-times-circle me-1"></i>Немає в наявності
+                                    </small>
+                                    {% endif %}
+                                </div>
+                                
+                                <button class="btn btn-primary w-100" 
+                                        data-action="add-to-cart" 
+                                        data-product-id="{{ product.id }}">
+                                    <i class="fas fa-shopping-cart me-2"></i>Додати до кошика
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Попередня</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Наступна</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">Товари не знайдено</h4>
+                <p class="text-muted">Спробуйте змінити параметри пошуку або фільтри</p>
+                <a href="{% url 'shop:product_list' %}" class="btn btn-primary">Показати всі товари</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// View toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const gridBtn = document.querySelector('[data-view="grid"]');
+    const listBtn = document.querySelector('[data-view="list"]');
+    const productsGrid = document.getElementById('products-grid');
+    
+    if (gridBtn && listBtn && productsGrid) {
+        gridBtn.addEventListener('click', function() {
+            this.classList.add('active');
+            listBtn.classList.remove('active');
+            productsGrid.className = 'row';
+        });
+        
+        listBtn.addEventListener('click', function() {
+            this.classList.add('active');
+            gridBtn.classList.remove('active');
+            productsGrid.className = 'row';
+            // Add list view styling
+            productsGrid.querySelectorAll('.col-lg-4').forEach(col => {
+                col.className = 'col-12 mb-3';
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

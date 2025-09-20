@@ -1,0 +1,247 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ptashka.shop - Сучасний інтернет-магазин{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{% static 'shop/css/style.css' %}" rel="stylesheet">
+    <!-- Chatbot CSS -->
+    <link href="{% static 'shop/css/chatbot.css' %}" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky-top">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <!-- Logo -->
+                <a class="navbar-brand fw-bold text-primary" href="{% url 'shop:home' %}">
+                    <i class="fas fa-shopping-bag me-2"></i>Ptashka.shop
+                </a>
+                
+                <!-- Mobile menu button -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <!-- Navigation -->
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <!-- Search -->
+                    <form class="d-flex flex-grow-1 mx-3" method="get" action="{% url 'shop:product_search' %}">
+                        <div class="input-group">
+                            <input class="form-control" type="search" name="q" placeholder="Пошук товарів..." 
+                                   value="{{ request.GET.q }}">
+                            <button class="btn btn-search" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Right menu -->
+                    <ul class="navbar-nav">
+                        <!-- Home navigation -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'shop:home' %}">Головна</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'shop:home' %}#categories">Категорії</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'shop:home' %}#featured">Рекомендовані</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'shop:home' %}#latest">Новинки</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'shop:home' %}#features">Переваги</a>
+                        </li>
+                        <!-- Categories dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="categoriesDropdown" 
+                               role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-th-large me-1"></i>Категорії
+                            </a>
+                            <ul class="dropdown-menu">
+                                {% for category in categories %}
+                                <li><a class="dropdown-item" href="{% url 'shop:category_detail' category.slug %}">
+                                    {{ category.name }}
+                                </a></li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                        
+                        <!-- Wishlist -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:wishlist' %}">
+                                <i class="fas fa-heart me-1"></i>Бажання
+                            </a>
+                        </li>
+                        
+                        <!-- Cart -->
+                        <li class="nav-item">
+                            <a class="nav-link position-relative" href="{% url 'cart:cart' %}">
+                                <i class="fas fa-shopping-cart me-1"></i>Кошик
+                                {% if cart_items_count > 0 %}
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    {{ cart_items_count }}
+                                </span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        
+                        <!-- User menu -->
+                        {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" 
+                               role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-1"></i>{{ user.first_name|default:user.email }}
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                                    <i class="fas fa-user me-2"></i>Профіль
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'orders:order_list' %}">
+                                    <i class="fas fa-box me-2"></i>Мої замовлення
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:wishlist' %}">
+                                    <i class="fas fa-heart me-2"></i>Список бажаних
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'account_logout' %}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Вийти
+                                </a></li>
+                            </ul>
+                        </li>
+                        {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'account_login' %}">
+                                <i class="fas fa-sign-in-alt me-1"></i>Увійти
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'account_signup' %}">
+                                <i class="fas fa-user-plus me-1"></i>Реєстрація
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </header>
+    
+    <!-- Main content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-5 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h5 class="text-primary mb-3">Ptashka.shop</h5>
+                    <p class="text-muted">Сучасний інтернет-магазин з акцентом на зручність користувача та швидкість роботи.</p>
+                    <div class="social-links">
+                        <a href="#" class="text-light me-3"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-light me-3"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-light me-3"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-light"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h6 class="text-primary mb-3">Каталог</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-muted text-decoration-none">Електроніка</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Одяг</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Дім та сад</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Спорт</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h6 class="text-primary mb-3">Клієнтам</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-muted text-decoration-none">Доставка та оплата</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Повернення товарів</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Гарантія</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Контакти</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h6 class="text-primary mb-3">Контакти</h6>
+                    <ul class="list-unstyled text-muted">
+                        <li><i class="fas fa-phone me-2"></i>+380 (44) 123-45-67</li>
+                        <li><i class="fas fa-envelope me-2"></i>info@ptashka.shop</li>
+                        <li><i class="fas fa-map-marker-alt me-2"></i>Київ, Україна</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <hr class="my-4">
+            
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="text-muted mb-0">&copy; 2024 Ptashka.shop. Всі права захищені.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="#" class="text-muted text-decoration-none me-3">Політика конфіденційності</a>
+                    <a href="#" class="text-muted text-decoration-none">Умови використання</a>
+                </div>
+            </div>
+            
+            <!-- Social Links -->
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <div class="social-links">
+                        <a href="#" title="Facebook" target="_blank" rel="noopener">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" title="Twitter" target="_blank" rel="noopener">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" title="Instagram" target="_blank" rel="noopener">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" title="YouTube" target="_blank" rel="noopener">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                        <a href="#" title="Telegram" target="_blank" rel="noopener">
+                            <i class="fab fa-telegram-plane"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="backToTop" title="Нагору">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+    
+    <!-- Chatbot -->
+    {% include 'chatbot/chatbot.html' %}
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Alpine.js -->
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <!-- Custom JS -->
+    <script src="{% static 'shop/js/main.js' %}"></script>
+    <!-- Chatbot JS -->
+    <script src="{% static 'shop/js/chatbot.js' %}"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

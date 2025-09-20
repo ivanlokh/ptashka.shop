@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  postgres:
+  db:
     image: postgres:15
     container_name: ptashka_postgres
     environment:
@@ -12,7 +12,8 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ptashka_network
 
   redis:
     image: redis:7-alpine
@@ -21,40 +22,76 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - ptashka_network
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: ptashka_frontend
-    ports:
-      - "3000:3000"
+  web:
+    build: .
+    container_name: ptashka_web
+    command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-    depends_on:
-      - backend
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: ptashka_backend
+      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
     ports:
-      - "3001:3001"
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
+      - "8000:8000"
     environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/ptashka_shop
-      - REDIS_URL=redis://redis:6379
+      - DEBUG=True
+      - DB_HOST=db
+      - DB_NAME=ptashka_shop
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
-      - postgres
+      - db
       - redis
+    networks:
+      - ptashka_network
+
+  celery:
+    build: .
+    container_name: ptashka_celery
+    command: celery -A ptashka_shop worker -l info
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=True
+      - DB_HOST=db
+      - DB_NAME=ptashka_shop
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    networks:
+      - ptashka_network
+
+  celery-beat:
+    build: .
+    container_name: ptashka_celery_beat
+    command: celery -A ptashka_shop beat -l info
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=True
+      - DB_HOST=db
+      - DB_NAME=ptashka_shop
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    networks:
+      - ptashka_network
 
 volumes:
   postgres_data:
   redis_data:
+  static_volume:
+  media_volume:
+
+networks:
+  ptashka_network:
+    driver: bridge
