@@ -1,0 +1,343 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Оформлення замовлення - Ptashka.shop{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Оформлення замовлення</h2>
+            
+            {% if cart and cart.items.exists %}
+            <div class="row">
+                <!-- Checkout Form -->
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-user me-2"></i>Контактна інформація
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" id="checkout-form">
+                                {% csrf_token %}
+                                
+                                <!-- Personal Information -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="first_name" class="form-label">Ім'я *</label>
+                                        <input type="text" class="form-control" id="first_name" name="first_name" 
+                                               value="{{ user.first_name }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="last_name" class="form-label">Прізвище *</label>
+                                        <input type="text" class="form-control" id="last_name" name="last_name" 
+                                               value="{{ user.last_name }}" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label">Email *</label>
+                                        <input type="email" class="form-control" id="email" name="email" 
+                                               value="{{ user.email }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="phone" class="form-label">Телефон *</label>
+                                        <input type="tel" class="form-control" id="phone" name="phone" 
+                                               value="{{ user.phone }}" required>
+                                    </div>
+                                </div>
+                                
+                                <!-- Shipping Address -->
+                                <div class="card mt-4">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-truck me-2"></i>Адреса доставки
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="shipping_city" class="form-label">Місто *</label>
+                                                <input type="text" class="form-control" id="shipping_city" name="shipping_city" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="shipping_postal_code" class="form-label">Поштовий індекс *</label>
+                                                <input type="text" class="form-control" id="shipping_postal_code" name="shipping_postal_code" required>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="shipping_address1" class="form-label">Адреса *</label>
+                                            <input type="text" class="form-control" id="shipping_address1" name="shipping_address1" 
+                                                   placeholder="Вулиця, будинок, квартира" required>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="shipping_address2" class="form-label">Додаткова інформація</label>
+                                            <input type="text" class="form-control" id="shipping_address2" name="shipping_address2" 
+                                                   placeholder="Під'їзд, поверх, код домофона">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Payment Method -->
+                                <div class="card mt-4">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-credit-card me-2"></i>Спосіб оплати
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="payment_method" 
+                                                           id="card_payment" value="card" checked>
+                                                    <label class="form-check-label" for="card_payment">
+                                                        <i class="fas fa-credit-card me-2"></i>Банківська карта
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="payment_method" 
+                                                           id="cash_payment" value="cash">
+                                                    <label class="form-check-label" for="cash_payment">
+                                                        <i class="fas fa-money-bill me-2"></i>Готівка при отриманні
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Card Payment Details -->
+                                        <div id="card-details" class="mt-3">
+                                            <div class="row">
+                                                <div class="col-md-8">
+                                                    <label for="card_number" class="form-label">Номер картки</label>
+                                                    <input type="text" class="form-control" id="card_number" name="card_number" 
+                                                           placeholder="1234 5678 9012 3456">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="card_cvv" class="form-label">CVV</label>
+                                                    <input type="text" class="form-control" id="card_cvv" name="card_cvv" 
+                                                           placeholder="123">
+                                                </div>
+                                            </div>
+                                            <div class="row mt-2">
+                                                <div class="col-md-6">
+                                                    <label for="card_expiry" class="form-label">Термін дії</label>
+                                                    <input type="text" class="form-control" id="card_expiry" name="card_expiry" 
+                                                           placeholder="MM/YY">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Order Notes -->
+                                <div class="card mt-4">
+                                    <div class="card-body">
+                                        <label for="order_notes" class="form-label">Коментар до замовлення</label>
+                                        <textarea class="form-control" id="order_notes" name="order_notes" rows="3" 
+                                                  placeholder="Додаткові побажання щодо доставки або замовлення"></textarea>
+                                    </div>
+                                </div>
+                                
+                                <!-- Terms and Conditions -->
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" id="terms_agreed" required>
+                                    <label class="form-check-label" for="terms_agreed">
+                                        Я погоджуюся з <a href="#" target="_blank">умовами використання</a> та 
+                                        <a href="#" target="_blank">політикою конфіденційності</a> *
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="newsletter_subscribe">
+                                    <label class="form-check-label" for="newsletter_subscribe">
+                                        Підписатися на розсилку новин та спеціальних пропозицій
+                                    </label>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Summary -->
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Ваше замовлення</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Cart Items -->
+                            {% for item in cart.items.all %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center">
+                                    {% if item.product.primary_image %}
+                                    <img src="{{ item.product.primary_image.image.url }}" alt="{{ item.product.name }}" 
+                                         class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                    {% endif %}
+                                    <div>
+                                        <small class="fw-bold">{{ item.product.name|truncatechars:20 }}</small>
+                                        <br>
+                                        <small class="text-muted">x{{ item.quantity }}</small>
+                                    </div>
+                                </div>
+                                <span class="fw-bold">{{ item.total_price }} ₴</span>
+                            </div>
+                            {% endfor %}
+                            
+                            <hr>
+                            
+                            <!-- Order Totals -->
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Товари ({{ cart.total_items }} шт.)</span>
+                                <span>{{ cart.total_price }} ₴</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Доставка</span>
+                                <span class="text-success">Безкоштовно</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Податок</span>
+                                <span>0 ₴</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <strong>Всього до сплати</strong>
+                                <strong class="text-primary">{{ cart.total_price }} ₴</strong>
+                            </div>
+                            
+                            <!-- Security Info -->
+                            <div class="mt-4">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-shield-alt text-success me-2"></i>
+                                    <small>Безпечна оплата</small>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-truck text-primary me-2"></i>
+                                    <small>Швидка доставка</small>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-undo text-info me-2"></i>
+                                    <small>Легке повернення</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Place Order Button -->
+                    <div class="mt-3">
+                        <button type="submit" form="checkout-form" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-credit-card me-2"></i>Підтвердити замовлення
+                        </button>
+                        <a href="{% url 'cart:cart' %}" class="btn btn-outline-secondary w-100 mt-2">
+                            <i class="fas fa-arrow-left me-2"></i>Повернутися до кошика
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            {% else %}
+            <!-- Empty Cart -->
+            <div class="text-center py-5">
+                <i class="fas fa-shopping-cart fa-5x text-muted mb-4"></i>
+                <h3 class="text-muted">Ваш кошик порожній</h3>
+                <p class="text-muted mb-4">Додайте товари до кошика, щоб оформити замовлення</p>
+                <a href="{% url 'shop:product_list' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-shopping-bag me-2"></i>Переглянути товари
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle card payment details
+    const cardPayment = document.getElementById('card_payment');
+    const cashPayment = document.getElementById('cash_payment');
+    const cardDetails = document.getElementById('card-details');
+    
+    function toggleCardDetails() {
+        if (cardPayment.checked) {
+            cardDetails.style.display = 'block';
+        } else {
+            cardDetails.style.display = 'none';
+        }
+    }
+    
+    cardPayment.addEventListener('change', toggleCardDetails);
+    cashPayment.addEventListener('change', toggleCardDetails);
+    
+    // Initialize
+    toggleCardDetails();
+    
+    // Form validation
+    const form = document.getElementById('checkout-form');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Basic validation
+        const requiredFields = form.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        if (isValid) {
+            // Show loading state
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Обробка...';
+            submitBtn.disabled = true;
+            
+            // Simulate order processing
+            setTimeout(() => {
+                alert('Замовлення успішно оформлено! Номер замовлення: #' + Math.random().toString(36).substr(2, 9).toUpperCase());
+                window.location.href = '/orders/';
+            }, 2000);
+        } else {
+            alert('Будь ласка, заповніть всі обов\'язкові поля');
+        }
+    });
+    
+    // Card number formatting
+    const cardNumber = document.getElementById('card_number');
+    cardNumber.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\s/g, '').replace(/[^0-9]/gi, '');
+        let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+        e.target.value = formattedValue;
+    });
+    
+    // CVV formatting
+    const cardCvv = document.getElementById('card_cvv');
+    cardCvv.addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/[^0-9]/gi, '').substr(0, 3);
+    });
+    
+    // Expiry date formatting
+    const cardExpiry = document.getElementById('card_expiry');
+    cardExpiry.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+            value = value.substring(0, 2) + '/' + value.substring(2, 4);
+        }
+        e.target.value = value;
+    });
+});
+</script>
+{% endblock %}

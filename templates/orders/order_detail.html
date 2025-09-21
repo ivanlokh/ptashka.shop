@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Замовлення #{{ order.order_number }} - Ptashka.shop{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Замовлення #{{ order.order_number }}</h2>
+                <span class="badge 
+                    {% if order.status == 'pending' %}badge-warning
+                    {% elif order.status == 'confirmed' %}badge-info
+                    {% elif order.status == 'processing' %}badge-primary
+                    {% elif order.status == 'shipped' %}badge-success
+                    {% elif order.status == 'delivered' %}badge-success
+                    {% elif order.status == 'cancelled' %}badge-danger
+                    {% else %}badge-secondary{% endif %} fs-6">
+                    {{ order.get_status_display }}
+                </span>
+            </div>
+            
+            <div class="row">
+                <!-- Order Items -->
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Товари в замовленні</h5>
+                        </div>
+                        <div class="card-body">
+                            {% for item in order.items.all %}
+                            <div class="row align-items-center border-bottom py-3">
+                                <div class="col-md-2">
+                                    {% if item.product.primary_image %}
+                                    <img src="{{ item.product.primary_image.image.url }}" alt="{{ item.product.name }}" 
+                                         class="img-fluid rounded" style="height: 80px; object-fit: cover;">
+                                    {% else %}
+                                    <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 80px;">
+                                        <i class="fas fa-image text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <h6 class="mb-1">
+                                        <a href="{% url 'shop:product_detail' item.product.slug %}" 
+                                           class="text-decoration-none text-dark">
+                                            {{ item.product.name }}
+                                        </a>
+                                    </h6>
+                                    <small class="text-muted">{{ item.product.sku }}</small>
+                                </div>
+                                
+                                <div class="col-md-2">
+                                    <span class="fw-bold">{{ item.quantity }} шт.</span>
+                                </div>
+                                
+                                <div class="col-md-2">
+                                    <span class="text-muted">{{ item.price }} ₴</span>
+                                </div>
+                                
+                                <div class="col-md-2 text-end">
+                                    <span class="fw-bold text-primary">{{ item.total }} ₴</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Order Notes -->
+                    {% if order.notes %}
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">Коментар до замовлення</h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0">{{ order.notes }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Order Summary -->
+                <div class="col-lg-4">
+                    <!-- Order Info -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">Інформація про замовлення</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-2">
+                                <div class="col-5"><strong>Номер:</strong></div>
+                                <div class="col-7">#{{ order.order_number }}</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-5"><strong>Дата:</strong></div>
+                                <div class="col-7">{{ order.created_at|date:"d.m.Y H:i" }}</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-5"><strong>Статус:</strong></div>
+                                <div class="col-7">{{ order.get_status_display }}</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-5"><strong>Товарів:</strong></div>
+                                <div class="col-7">{{ order.total_items }} шт.</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-5"><strong>Валюта:</strong></div>
+                                <div class="col-7">{{ order.currency }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Order Totals -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">Підсумок замовлення</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Товари ({{ order.total_items }} шт.)</span>
+                                <span>{{ order.subtotal }} ₴</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Доставка</span>
+                                <span class="text-success">{{ order.shipping }} ₴</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Податок</span>
+                                <span>{{ order.tax }} ₴</span>
+                            </div>
+                            {% if order.discount > 0 %}
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Знижка</span>
+                                <span class="text-success">-{{ order.discount }} ₴</span>
+                            </div>
+                            {% endif %}
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <strong>Всього</strong>
+                                <strong class="text-primary">{{ order.total }} ₴</strong>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Shipping Address -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-truck me-2"></i>Адреса доставки
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <address class="mb-0">
+                                <strong>{{ order.shipping_address.first_name }} {{ order.shipping_address.last_name }}</strong><br>
+                                {{ order.shipping_address.address1 }}<br>
+                                {% if order.shipping_address.address2 %}{{ order.shipping_address.address2 }}<br>{% endif %}
+                                {{ order.shipping_address.city }}, {{ order.shipping_address.postal_code }}<br>
+                                {{ order.shipping_address.country }}<br>
+                                {% if order.shipping_address.phone %}
+                                <i class="fas fa-phone me-1"></i>{{ order.shipping_address.phone }}
+                                {% endif %}
+                            </address>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="mt-3">
+                        {% if order.status == 'pending' or order.status == 'confirmed' %}
+                        <button class="btn btn-outline-danger w-100 mb-2" 
+                                onclick="if(confirm('Ви впевнені, що хочете скасувати замовлення?')) cancelOrder({{ order.id }})">
+                            <i class="fas fa-times me-2"></i>Скасувати замовлення
+                        </button>
+                        {% endif %}
+                        
+                        <a href="{% url 'orders:order_list' %}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-arrow-left me-2"></i>Повернутися до списку
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function cancelOrder(orderId) {
+    fetch(`/orders/${orderId}/cancel/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Помилка при скасуванні замовлення');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Помилка при скасуванні замовлення');
+    });
+}
+
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+</script>
+{% endblock %}

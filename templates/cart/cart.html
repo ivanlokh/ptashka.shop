@@ -7,60 +7,103 @@
 <div class="container py-4">
     <div class="row">
         <div class="col-12">
-            <h2 class="mb-4">Кошик покупок</h2>
+            <!-- Cart Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="fas fa-shopping-cart text-primary me-2"></i>Кошик покупок
+                </h2>
+                <span class="badge bg-primary fs-6">{{ cart_items|length }} товарів</span>
+            </div>
             
             {% if cart_items %}
             <div class="row">
                 <!-- Cart Items -->
                 <div class="col-lg-8">
-                    <div class="card">
-                        <div class="card-body">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white border-0 py-3">
+                            <h5 class="mb-0 text-dark">
+                                <i class="fas fa-box me-2"></i>Товари в кошику
+                            </h5>
+                        </div>
+                        <div class="card-body p-0">
                             {% for item in cart_items %}
-                            <div class="row align-items-center border-bottom py-3" data-cart-item-id="{{ item.id }}">
-                                <div class="col-md-2">
-                                    {% if item.product.primary_image %}
-                                    <img src="{{ item.product.primary_image.image.url }}" alt="{{ item.product.name }}" 
-                                         class="img-fluid rounded" style="height: 80px; object-fit: cover;">
-                                    {% else %}
-                                    <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 80px;">
-                                        <i class="fas fa-image text-muted"></i>
+                            <div class="cart-item p-4 border-bottom" data-cart-item-id="{{ item.id }}">
+                                <div class="row align-items-center">
+                                    <!-- Product Image -->
+                                    <div class="col-md-2">
+                                        <div class="position-relative">
+                                            {% if item.product.primary_image %}
+                                            <img src="{{ item.product.primary_image.image.url }}" alt="{{ item.product.name }}" 
+                                                 class="img-fluid rounded-3 shadow-sm" style="height: 100px; width: 100px; object-fit: cover;">
+                                            {% else %}
+                                            <div class="bg-light d-flex align-items-center justify-content-center rounded-3 shadow-sm" 
+                                                 style="height: 100px; width: 100px;">
+                                                <i class="fas fa-image text-muted fa-2x"></i>
+                                            </div>
+                                            {% endif %}
+                                            <!-- Stock Badge -->
+                                            {% if item.product.stock < 10 %}
+                                            <span class="badge bg-warning position-absolute top-0 start-0 m-2">
+                                                <small>Закінчується</small>
+                                            </span>
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="col-md-4">
-                                    <h6 class="mb-1">
-                                        <a href="{% url 'shop:product_detail' item.product.slug %}" 
-                                           class="text-decoration-none text-dark">
-                                            {{ item.product.name }}
-                                        </a>
-                                    </h6>
-                                    <small class="text-muted">{{ item.product.sku }}</small>
-                                </div>
-                                
-                                <div class="col-md-2">
-                                    <div class="input-group">
-                                        <button class="btn btn-outline-secondary btn-sm" type="button" 
-                                                onclick="updateQuantity({{ item.id }}, {{ item.quantity|add:'-1' }})">-</button>
-                                        <input type="number" class="form-control text-center" 
-                                               value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}"
-                                               onchange="updateQuantity({{ item.id }}, this.value)">
-                                        <button class="btn btn-outline-secondary btn-sm" type="button" 
-                                                onclick="updateQuantity({{ item.id }}, {{ item.quantity|add:'1' }})">+</button>
+                                    
+                                    <!-- Product Info -->
+                                    <div class="col-md-4">
+                                        <h6 class="mb-2 fw-bold">
+                                            <a href="{% url 'shop:product_detail' item.product.slug %}" 
+                                               class="text-decoration-none text-dark hover-primary">
+                                                {{ item.product.name }}
+                                            </a>
+                                        </h6>
+                                        <small class="text-muted d-block mb-1">{{ item.product.sku }}</small>
+                                        <div class="d-flex align-items-center">
+                                            <span class="text-success fw-bold">{{ item.product.price }} ₴</span>
+                                            {% if item.product.old_price and item.product.old_price > item.product.price %}
+                                            <span class="text-muted text-decoration-line-through ms-2 small">{{ item.product.old_price }} ₴</span>
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                </div>
-                                
-                                <div class="col-md-2">
-                                    <span class="h6 text-primary">{{ item.total_price }} ₴</span>
-                                </div>
-                                
-                                <div class="col-md-2 text-end">
-                                    <button class="btn btn-outline-danger btn-sm" 
-                                            data-action="remove-from-cart" 
-                                            data-cart-item-id="{{ item.id }}"
-                                            title="Видалити з кошика">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                    
+                                    <!-- Quantity Controls -->
+                                    <div class="col-md-3">
+                                        <div class="quantity-controls">
+                                            <label class="form-label small text-muted mb-2">Кількість</label>
+                                            <div class="input-group input-group-sm">
+                                                <button class="btn btn-outline-secondary" type="button" 
+                                                        onclick="updateQuantity({{ item.id }}, {{ item.quantity|add:'-1' }})"
+                                                        style="border-radius: 8px 0 0 8px;">
+                                                    <i class="fas fa-minus"></i>
+                                                </button>
+                                                <input type="number" class="form-control text-center fw-bold" 
+                                                       value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}"
+                                                       onchange="updateQuantity({{ item.id }}, this.value)"
+                                                       style="border-radius: 0;">
+                                                <button class="btn btn-outline-secondary" type="button" 
+                                                        onclick="updateQuantity({{ item.id }}, {{ item.quantity|add:'1' }})"
+                                                        style="border-radius: 0 8px 8px 0;">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            </div>
+                                            <small class="text-muted">Доступно: {{ item.product.stock }} шт.</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Price & Actions -->
+                                    <div class="col-md-3">
+                                        <div class="text-end">
+                                            <div class="h5 text-primary fw-bold mb-2">{{ item.total_price }} ₴</div>
+                                            <button class="btn btn-outline-danger btn-sm" 
+                                                    data-action="remove-from-cart" 
+                                                    data-cart-item-id="{{ item.id }}"
+                                                    title="Видалити з кошика"
+                                                    onclick="if(confirm('Видалити товар з кошика?')) removeFromCart({{ item.id }})">
+                                                <i class="fas fa-trash me-1"></i>Видалити
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             {% endfor %}
@@ -77,34 +120,50 @@
                 
                 <!-- Order Summary -->
                 <div class="col-lg-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Підсумок замовлення</h5>
+                    <div class="card shadow-sm border-0 sticky-top" style="top: 20px;">
+                        <div class="card-header bg-gradient-primary text-white border-0 py-3">
+                            <h5 class="mb-0">
+                                <i class="fas fa-calculator me-2"></i>Підсумок замовлення
+                            </h5>
                         </div>
                         <div class="card-body">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Товари ({{ cart.total_items }} шт.)</span>
-                                <span>{{ cart.subtotal }} ₴</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Доставка</span>
-                                <span class="text-success">Безкоштовно</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Податок</span>
-                                <span>0 ₴</span>
-                            </div>
-                            <hr>
-                            <div class="d-flex justify-content-between">
-                                <strong>Всього</strong>
-                                <strong class="text-primary cart-total">{{ cart.total_price }} ₴</strong>
+                            <!-- Order Summary -->
+                            <div class="order-summary">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-muted">Товари ({{ cart.total_items }} шт.)</span>
+                                    <span class="fw-bold">{{ cart.subtotal }} ₴</span>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-muted">
+                                        <i class="fas fa-truck me-1"></i>Доставка
+                                    </span>
+                                    <span class="text-success fw-bold">
+                                        <i class="fas fa-gift me-1"></i>Безкоштовно
+                                    </span>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-muted">
+                                        <i class="fas fa-percentage me-1"></i>Податок
+                                    </span>
+                                    <span class="fw-bold">0 ₴</span>
+                                </div>
+                                
+                                <hr class="my-3">
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <span class="h5 mb-0">Всього до сплати</span>
+                                    <span class="h4 text-primary fw-bold cart-total">{{ cart.total_price }} ₴</span>
+                                </div>
                             </div>
                             
-                            <div class="mt-4">
-                                <a href="{% url 'orders:checkout' %}" class="btn btn-primary btn-lg w-100 mb-2">
+                            <!-- Action Buttons -->
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'orders:checkout' %}" class="btn btn-primary btn-lg">
                                     <i class="fas fa-credit-card me-2"></i>Оформити замовлення
                                 </a>
-                                <button class="btn btn-outline-danger w-100" 
+                                <button class="btn btn-outline-danger" 
                                         data-action="clear-cart"
                                         onclick="if(confirm('Ви впевнені, що хочете очистити кошик?')) clearCart()">
                                     <i class="fas fa-trash me-2"></i>Очистити кошик
@@ -113,17 +172,54 @@
                         </div>
                     </div>
                     
-                    <!-- Security Info -->
-                    <div class="card mt-3">
+                    <!-- Security & Benefits -->
+                    <div class="card shadow-sm border-0 mt-3">
                         <div class="card-body">
-                            <h6 class="card-title">
+                            <h6 class="card-title text-dark mb-3">
                                 <i class="fas fa-shield-alt text-success me-2"></i>Безпека покупок
                             </h6>
-                            <ul class="list-unstyled mb-0 small">
-                                <li><i class="fas fa-check text-success me-2"></i>Захищена оплата</li>
-                                <li><i class="fas fa-check text-success me-2"></i>Гарантія якості</li>
-                                <li><i class="fas fa-check text-success me-2"></i>Швидка доставка</li>
-                            </ul>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-lock text-success me-2"></i>
+                                        <small>Захищена оплата</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-award text-warning me-2"></i>
+                                        <small>Гарантія якості</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-shipping-fast text-primary me-2"></i>
+                                        <small>Швидка доставка</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-undo text-info me-2"></i>
+                                        <small>Легке повернення</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Promo Code -->
+                    <div class="card shadow-sm border-0 mt-3">
+                        <div class="card-body">
+                            <h6 class="card-title text-dark mb-3">
+                                <i class="fas fa-tag text-primary me-2"></i>Промокод
+                            </h6>
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Введіть промокод" id="promo-code">
+                                <button class="btn btn-outline-primary" type="button" onclick="applyPromoCode()">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted">Знижка буде застосована при оформленні</small>
                         </div>
                     </div>
                 </div>
@@ -132,12 +228,23 @@
             {% else %}
             <!-- Empty Cart -->
             <div class="text-center py-5">
-                <i class="fas fa-shopping-cart fa-5x text-muted mb-4"></i>
-                <h3 class="text-muted">Ваш кошик порожній</h3>
-                <p class="text-muted mb-4">Додайте товари до кошика, щоб продовжити покупки</p>
-                <a href="{% url 'shop:product_list' %}" class="btn btn-primary btn-lg">
-                    <i class="fas fa-shopping-bag me-2"></i>Переглянути товари
-                </a>
+                <div class="empty-cart-icon mb-4">
+                    <i class="fas fa-shopping-cart fa-5x text-muted"></i>
+                    <div class="position-relative">
+                        <i class="fas fa-plus-circle fa-2x text-primary position-absolute" 
+                           style="top: -10px; right: -10px; animation: pulse 2s infinite;"></i>
+                    </div>
+                </div>
+                <h3 class="text-muted mb-3">Ваш кошик порожній</h3>
+                <p class="text-muted mb-4 fs-5">Додайте товари до кошика, щоб продовжити покупки</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{% url 'shop:product_list' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-shopping-bag me-2"></i>Переглянути товари
+                    </a>
+                    <a href="{% url 'shop:home' %}" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-home me-2"></i>На головну
+                    </a>
+                </div>
             </div>
             {% endif %}
         </div>
@@ -147,11 +254,19 @@
 
 {% block extra_js %}
 <script>
+// Cart functionality with enhanced UX
 function updateQuantity(cartItemId, quantity) {
     if (quantity < 1) {
         removeFromCart(cartItemId);
         return;
     }
+    
+    // Show loading state
+    const cartItem = document.querySelector(`[data-cart-item-id="${cartItemId}"]`);
+    const quantityInput = cartItem.querySelector('input[type="number"]');
+    const originalValue = quantityInput.value;
+    quantityInput.value = '...';
+    quantityInput.disabled = true;
     
     fetch('/cart/update/', {
         method: 'POST',
@@ -169,17 +284,74 @@ function updateQuantity(cartItemId, quantity) {
         if (data.success) {
             updateCartTotals(data.cart_total);
             showNotification('Кількість оновлено', 'success');
+            quantityInput.value = quantity;
         } else {
             showNotification('Помилка при оновленні', 'error');
+            quantityInput.value = originalValue;
         }
     })
     .catch(error => {
         console.error('Error:', error);
         showNotification('Помилка при оновленні', 'error');
+        quantityInput.value = originalValue;
+    })
+    .finally(() => {
+        quantityInput.disabled = false;
+    });
+}
+
+function removeFromCart(cartItemId) {
+    const cartItem = document.querySelector(`[data-cart-item-id="${cartItemId}"]`);
+    cartItem.style.opacity = '0.5';
+    cartItem.style.pointerEvents = 'none';
+    
+    fetch('/cart/remove/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            cart_item_id: cartItemId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            cartItem.style.transition = 'all 0.3s ease';
+            cartItem.style.transform = 'translateX(-100%)';
+            cartItem.style.opacity = '0';
+            
+            setTimeout(() => {
+                cartItem.remove();
+                updateCartTotals(data.cart_total);
+                showNotification('Товар видалено з кошика', 'success');
+                
+                // Check if cart is empty
+                if (data.cart_items_count === 0) {
+                    location.reload();
+                }
+            }, 300);
+        } else {
+            showNotification('Помилка при видаленні', 'error');
+            cartItem.style.opacity = '1';
+            cartItem.style.pointerEvents = 'auto';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Помилка при видаленні', 'error');
+        cartItem.style.opacity = '1';
+        cartItem.style.pointerEvents = 'auto';
     });
 }
 
 function clearCart() {
+    const clearBtn = document.querySelector('[data-action="clear-cart"]');
+    const originalText = clearBtn.innerHTML;
+    clearBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Очищення...';
+    clearBtn.disabled = true;
+    
     fetch('/cart/clear/', {
         method: 'POST',
         headers: {
@@ -190,15 +362,139 @@ function clearCart() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            location.reload();
+            showNotification('Кошик очищено', 'success');
+            setTimeout(() => location.reload(), 1000);
         } else {
             showNotification('Помилка при очищенні кошика', 'error');
+            clearBtn.innerHTML = originalText;
+            clearBtn.disabled = false;
         }
     })
     .catch(error => {
         console.error('Error:', error);
         showNotification('Помилка при очищенні кошика', 'error');
+        clearBtn.innerHTML = originalText;
+        clearBtn.disabled = false;
     });
 }
+
+function updateCartTotals(total) {
+    const cartTotalElements = document.querySelectorAll('.cart-total');
+    cartTotalElements.forEach(element => {
+        element.textContent = total + ' ₴';
+    });
+}
+
+function applyPromoCode() {
+    const promoCode = document.getElementById('promo-code').value.trim();
+    if (!promoCode) {
+        showNotification('Введіть промокод', 'warning');
+        return;
+    }
+    
+    // Simulate promo code validation
+    showNotification('Промокод перевіряється...', 'info');
+    
+    // Mock validation - replace with real API call
+    setTimeout(() => {
+        if (promoCode.toLowerCase() === 'welcome10') {
+            showNotification('Промокод застосовано! Знижка 10%', 'success');
+        } else {
+            showNotification('Невірний промокод', 'error');
+        }
+    }, 1000);
+}
+
+function showNotification(message, type) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 3000);
+}
+
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+// Add hover effects and animations
+document.addEventListener('DOMContentLoaded', function() {
+    // Add hover effects to cart items
+    const cartItems = document.querySelectorAll('.cart-item');
+    cartItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#f8f9fa';
+            this.style.transition = 'background-color 0.3s ease';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = 'transparent';
+        });
+    });
+    
+    // Add click animation to buttons
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(button => {
+        button.addEventListener('click', function() {
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 150);
+        });
+    });
+});
 </script>
+
+<style>
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.hover-primary:hover {
+    color: var(--primary-color) !important;
+    transition: color 0.3s ease;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+}
+
+.cart-item {
+    transition: all 0.3s ease;
+}
+
+.cart-item:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.quantity-controls .input-group {
+    max-width: 120px;
+}
+
+.sticky-top {
+    position: sticky;
+    top: 20px;
+}
+
+@media (max-width: 768px) {
+    .sticky-top {
+        position: relative;
+        top: auto;
+    }
+}
+</style>
 {% endblock %}
