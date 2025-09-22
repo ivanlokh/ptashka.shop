@@ -1,6 +1,6 @@
 {
   "name": "ptashka-shop",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Сучасний інтернет-магазин з акцентом на UX та швидкість",
   "main": "index.js",
   "scripts": {
