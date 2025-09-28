@@ -1,0 +1,347 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 2 * * *'  # Щоденні тести о 2:00 UTC
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  # Лінтинг та форматування
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort mypy
+        pip install -r requirements-dev.txt
+        
+    - name: Run Black (code formatting)
+      run: black --check --diff .
+      
+    - name: Run isort (import sorting)
+      run: isort --check-only --diff .
+      
+    - name: Run flake8 (linting)
+      run: flake8 .
+      
+    - name: Run mypy (type checking)
+      run: mypy .
+
+  # Тестування
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ptashka_shop_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    strategy:
+      matrix:
+        django-version: ['5.2', '5.1']
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        pip install Django==${{ matrix.django-version }}
+        
+    - name: Run migrations
+      run: |
+        python manage.py migrate
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/ptashka_shop_test
+        REDIS_URL: redis://localhost:6379/1
+        
+    - name: Run tests
+      run: |
+        coverage run --source='.' manage.py test
+        coverage report
+        coverage xml
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/ptashka_shop_test
+        REDIS_URL: redis://localhost:6379/1
+        SECRET_KEY: test-secret-key
+        DEBUG: True
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  # Security scanning
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install safety bandit
+        
+    - name: Run Safety (vulnerability check)
+      run: safety check
+      
+    - name: Run Bandit (security linting)
+      run: bandit -r . -f json -o bandit-report.json
+      
+    - name: Upload security report
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-report
+        path: bandit-report.json
+
+  # Frontend tests
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: |
+        npm ci
+        
+    - name: Run ESLint
+      run: npm run lint
+      
+    - name: Run tests
+      run: npm test
+      
+    - name: Build frontend
+      run: npm run build
+
+  # Performance tests
+  performance:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: [test, frontend-test]
+    if: github.event_name == 'schedule' || contains(github.event.head_commit.message, '[performance]')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install locust
+        
+    - name: Run performance tests
+      run: |
+        locust -f load_tests/locustfile.py \
+          --host=https://staging.ptashka.shop \
+          --users=50 \
+          --spawn-rate=5 \
+          --run-time=10m \
+          --headless \
+          --html=performance_report.html
+          
+    - name: Upload performance report
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-report
+        path: performance_report.html
+
+  # Docker build
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: |
+          ptashka/shop:latest
+          ptashka/shop:${{ github.sha }}
+          ptashka/shop:${{ github.ref_name }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # Deploy to staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Deploy to staging
+      run: |
+        echo "Deploying to staging environment..."
+        # Тут буде команда деплою на staging
+        # Наприклад, kubectl apply або docker-compose up
+        
+    - name: Run smoke tests
+      run: |
+        curl -f https://staging.ptashka.shop/api/health/ || exit 1
+        
+    - name: Notify team
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#deployments'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      if: always()
+
+  # Deploy to production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Deploy to production
+      run: |
+        echo "Deploying to production environment..."
+        # Тут буде команда деплою на production
+        
+    - name: Run health check
+      run: |
+        curl -f https://ptashka.shop/api/health/ || exit 1
+        
+    - name: Notify team
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#deployments'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      if: always()
+
+  # Database migrations
+  migrate:
+    name: Database Migration
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run migrations
+      run: |
+        echo "Running database migrations..."
+        # Тут буде команда для запуску міграцій
+        # python manage.py migrate --settings=ptashka_shop.settings.production
+
+  # Cleanup
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: always()
+    
+    steps:
+    - name: Cleanup old Docker images
+      run: |
+        echo "Cleaning up old Docker images..."
+        # Тут буде логіка очищення старих образів

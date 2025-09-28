@@ -236,6 +236,7 @@ gunicorn ptashka_shop.wsgi:application
 
 ## 🧪 Тестування
 
+### Локальне тестування:
 ```bash
 # Запуск тестів
 python manage.py test
@@ -244,6 +245,27 @@ python manage.py test
 coverage run --source='.' manage.py test
 coverage report
 coverage html
+
+# Performance тести
+locust -f load_tests/locustfile.py --host=http://localhost:8000
+```
+
+### CI/CD Pipeline:
+Автоматичне тестування через GitHub Actions включає:
+- **Лінтинг**: Black, isort, flake8, mypy
+- **Тестування**: pytest з покриттям коду
+- **Безпека**: safety, bandit
+- **Performance**: load testing з Locust
+- **Docker**: збірка та тестування контейнерів
+
+### Pre-commit hooks:
+```bash
+# Встановлення pre-commit
+pip install pre-commit
+pre-commit install
+
+# Ручний запуск
+pre-commit run --all-files
 ```
 
 ## 🆘 Troubleshooting
@@ -481,6 +503,51 @@ journalctl -u ptashka-celery-beat -e --no-pager
 - **Sentry** - відстеження помилок
 - **Google Analytics** - аналіз поведінки користувачів
 - **Django Admin** - управління контентом
+- **Prometheus + Grafana** - моніторинг системи
+- **Performance метрики** - детальні бенчмарки
+
+## 🏗️ Архітектура системи
+
+Детальна діаграма архітектури, компоненти та технічні рішення доступні в [docs/architecture.md](docs/architecture.md).
+
+### Ключові компоненти:
+- **Frontend**: Django Templates + Bootstrap 5 + Alpine.js
+- **Backend**: Django 5.2 + DRF + PostgreSQL + Redis
+- **Background Tasks**: Celery + Redis
+- **Monitoring**: Prometheus + Grafana + Sentry
+- **CDN**: Cloudflare для статичних файлів
+- **Storage**: AWS S3 + Cloudinary для медіа
+
+## 📚 API Документація
+
+Повна API документація з прикладами використання:
+- **Swagger UI**: `http://localhost:8000/api/docs/`
+- **ReDoc**: `http://localhost:8000/api/redoc/`
+- **Документація**: [docs/api-documentation.md](docs/api-documentation.md)
+- **Приклади коду**: [docs/api-examples.md](docs/api-examples.md)
+
+### Основні endpoints:
+- `GET /api/products/` - список товарів з фільтрацією
+- `GET /api/products/{id}/` - деталі товару
+- `POST /api/cart/add/` - додавання до кошика
+- `POST /api/orders/create/` - створення замовлення
+- `POST /api/auth/login/` - аутентифікація
+
+## ⚡ Performance метрики
+
+Детальні метрики продуктивності та бенчмарки в [docs/performance-metrics.md](docs/performance-metrics.md).
+
+### Цілі продуктивності:
+- **API відгук**: < 200ms для 95% запитів
+- **Час завантаження**: < 2 секунди
+- **Throughput**: 1000+ запитів/хвилину
+- **Доступність**: 99.9% uptime
+
+### Інструменти моніторингу:
+- **Prometheus** - збір метрик
+- **Grafana** - візуалізація
+- **Sentry** - відстеження помилок
+- **Locust** - навантажувальне тестування
 
 ## 🔍 Аналіз Kosik.cz - Ключові особливості
 
@@ -558,6 +625,38 @@ journalctl -u ptashka-celery-beat -e --no-pager
 - **UI/UX Designer** - дизайн інтерфейсу
 - **DevOps Engineer** - інфраструктура та розгортання
 
+## 🚀 CI/CD Pipeline
+
+Проект налаштований з повним CI/CD pipeline через GitHub Actions:
+
+### Автоматичні процеси:
+- **Лінтинг та форматування** коду
+- **Тестування** з покриттям коду
+- **Security scanning** (safety, bandit)
+- **Performance тести** з Locust
+- **Docker збірка** та push до registry
+- **Автоматичний деплой** на staging/production
+
+### Environments:
+- **Development**: локальна розробка
+- **Staging**: тестування перед продакшном
+- **Production**: live сайт
+
+## 📋 Додаткові ресурси
+
+### Документація:
+- [Архітектура системи](docs/architecture.md)
+- [API документація](docs/api-documentation.md)
+- [Приклади використання API](docs/api-examples.md)
+- [Performance метрики](docs/performance-metrics.md)
+- [Скріншоти інтерфейсу](docs/screenshots.md)
+
+### Конфігурація:
+- [Docker Compose](docker-compose.yml) - локальна розробка
+- [Production Docker](docker-compose.prod.yml) - продакшн
+- [CI/CD Pipeline](.github/workflows/ci.yml) - автоматизація
+- [Pre-commit hooks](.pre-commit-config.yaml) - якість коду
+
 ## 📞 Контакти
 
 - **Email**: info@ptashka.shop
@@ -568,4 +667,4 @@ journalctl -u ptashka-celery-beat -e --no-pager
 
 **Статус проекту**: 🚧 В розробці
 
-*Останнє оновлення: 2025-09-22*
+*Останнє оновлення: 2025-01-22*
